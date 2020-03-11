@@ -18,25 +18,28 @@
       }
  */
 
-
-// retrieves the user input value from search box
-
-async function userSearchRequestVal() {
-  let searchRequestVal = $("#search-query").val();
-  await searchShows(searchRequestVal);
-}
-
-// Searches show by name TVMaze API and returns array of objects
+// Searches show by name TVMaze API and returns array of curated objects.
+// each obj contains show ID, name, summary, and image link (default img applied if none available)
 
 async function searchShows(query) {
   // TODO: Make an ajax request to the searchShows api.  Remove
   let showByNameUrl = "http://api.tvmaze.com/search/shows";
-  let returnedShow = await axios.get(showByNameUrl, {params: {q: query}});
-
-  return returnedShow;
+  let returnedShows = await axios.get(showByNameUrl, { params: { q: query }});
+  let showSearchResults = [];
+  for ( let i = 0; i < returnedShows.data.length; i++ ) {
+    let showObj = {};
+    showObj.id = returnedShows.data[i].show.id;
+    showObj.name = returnedShows.data[i].show.name;
+    showObj.summary = returnedShows.data[i].show.summary;
+    if ( !returnedShows.data[i].show.image ) {
+      showObj.image = 'https://thoughtcatalog.files.wordpress.com/2013/01/tv.jpg';
+    } else {
+      showObj.image = returnedShows.data[i].show.image.medium;
+    }
+    showSearchResults.push(showObj);
+  }
+  return showSearchResults;
 }
-
-
 
 /** Populate shows list:
  *     - given list of shows, add shows to DOM
@@ -51,6 +54,7 @@ function populateShows(shows) {
       `<div class="col-md-6 col-lg-3 Show" data-show-id="${show.id}">
          <div class="card" data-show-id="${show.id}">
            <div class="card-body">
+             <img class="card-img-top" src="${show.image}">
              <h5 class="card-title">${show.name}</h5>
              <p class="card-text">${show.summary}</p>
            </div>
@@ -91,5 +95,8 @@ async function getEpisodes(id) {
   //       you can get this by making GET request to
   //       http://api.tvmaze.com/shows/SHOW-ID-HERE/episodes
 
+  let episodeSearchUrl = `http://api.tvmaze.com/shows/${id}/episodes`;
+  let returnedEpisodes = await axios.get(episodeSearchUrl);
+  return returnedEpisodes;
   // TODO: return array-of-episode-info, as described in docstring above
 }
